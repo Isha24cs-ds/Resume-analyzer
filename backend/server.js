@@ -42,30 +42,51 @@ app.post("/analyze", upload.single("resume"), async (req, res) => {
 
     const resumeText = pdfData.text || "";
 
+    const jobDescription =
+      req.body.jobDescription || "";
+
     console.log("PDF parsed successfully");
 
     const prompt = `
-Analyze the following resume.
+You are an expert ATS Resume Reviewer, Career Coach and Interview Mentor.
+
+Analyze the resume against the job description.
 
 Return ONLY valid JSON.
 
 {
   "atsScore": 0,
+  "jobMatchScore": 0,
+  "missingSkills": [],
   "strengths": [],
   "weaknesses": [],
-  "suggestions": []
+  "suggestions": [],
+  "interviewQuestions": []
 }
 
 Rules:
-- ATS score must be between 0 and 100.
-- Give 3-5 strengths.
-- Give 3-5 weaknesses.
-- Give 3-5 suggestions.
-- Return only JSON.
-- Do not return markdown.
+
+- ATS Score between 0 and 100
+- Job Match Score between 0 and 100
+- Give 3-5 strengths
+- Give 3-5 weaknesses
+- Give 3-5 suggestions
+- List important missing skills
+- Generate 10 interview questions
+- Questions should be based on:
+  1. Resume skills
+  2. Resume projects
+  3. Job description
+  4. Experience level
+
+Return ONLY JSON.
+Do NOT return markdown.
 
 Resume:
 ${resumeText}
+
+Job Description:
+${jobDescription}
 `;
 
     const response = await ai.models.generateContent({
@@ -85,6 +106,28 @@ ${resumeText}
 
     const aiResult = JSON.parse(cleaned);
 
+    // Optional fallback defaults
+    aiResult.atsScore =
+      aiResult.atsScore || 0;
+
+    aiResult.jobMatchScore =
+      aiResult.jobMatchScore || 0;
+
+    aiResult.missingSkills =
+      aiResult.missingSkills || [];
+
+    aiResult.strengths =
+      aiResult.strengths || [];
+
+    aiResult.weaknesses =
+      aiResult.weaknesses || [];
+
+    aiResult.suggestions =
+      aiResult.suggestions || [];
+
+    aiResult.interviewQuestions =
+      aiResult.interviewQuestions || [];
+
     res.json(aiResult);
 
   } catch (error) {
@@ -96,7 +139,44 @@ ${resumeText}
     });
   }
 });
+app.post("/chat", async (req, res) => {
+  try {
+
+    const { message } = req.body;
+
+    const response =
+      await ai.models.generateContent({
+        model: "gemini-2.5-flash",
+        contents: `
+You are an AI Career Assistant.
+
+Help users with:
+- Resume improvement
+- ATS score
+- Internships
+- Placements
+- Interview preparation
+- Career guidance
+
+Question:
+${message}
+`,
+      });
+
+    res.json({
+      reply: response.text,
+    });
+
+  } catch (error) {
+
+    console.error(error);
+
+    res.status(500).json({
+      reply: "Something went wrong",
+    });
+  }
+});
 
 app.listen(5000, () => {
-  console.log("Server running on port 5000");
+  console.log("🚀 Server running on port 5000");
 });
