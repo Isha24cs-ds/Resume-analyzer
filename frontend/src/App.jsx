@@ -42,7 +42,7 @@ const [chatLoading, setChatLoading] = useState(false);
       setLoading(true);
 
       const response = await fetch(
-        "http://localhost:5000/analyze",
+        "https://resume-analyzer-w806.onrender.com/analyze",
         {
           method: "POST",
           body: formData,
@@ -93,7 +93,7 @@ const handleChat = async () => {
     setChatLoading(true);
 
     const response = await fetch(
-      "http://localhost:5000/chat",
+      "https://resume-analyzer-w806.onrender.com /chat",
       {
         method: "POST",
         headers: {

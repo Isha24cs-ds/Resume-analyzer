@@ -51,11 +51,6 @@ body{
   -webkit-text-fill-color:transparent;
 }
 
-
-  -webkit-background-clip:text;
-  -webkit-text-fill-color:transparent;
-}
-
 input[type="file"]{
   width:100%;
   padding:15px;
