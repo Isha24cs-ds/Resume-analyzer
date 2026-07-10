@@ -1,5 +1,5 @@
 require("dotenv").config();
-
+const axios = require("axios");
 const express = require("express");
 const multer = require("multer");
 const pdfParse = require("pdf-parse");
@@ -55,19 +55,24 @@ Analyze the resume against the job description.
 Return ONLY valid JSON.
 
 {
+  {
   "atsScore": 0,
   "jobMatchScore": 0,
+  "skills": [],
   "missingSkills": [],
   "strengths": [],
   "weaknesses": [],
   "suggestions": [],
   "interviewQuestions": []
 }
+}
 
 Rules:
-
+...
 - ATS Score between 0 and 100
 - Job Match Score between 0 and 100
+- Extract all important technical skills from the resume.
+- Return them in the "skills" array.
 - Give 3-5 strengths
 - Give 3-5 weaknesses
 - Give 3-5 suggestions
@@ -112,6 +117,9 @@ ${jobDescription}
 
     aiResult.jobMatchScore =
       aiResult.jobMatchScore || 0;
+      
+    aiResult.skills =
+      aiResult.skills || [];  
 
     aiResult.missingSkills =
       aiResult.missingSkills || [];
@@ -176,7 +184,51 @@ ${message}
     });
   }
 });
+  app.get("/test-jobs", async (req, res) => {
+  try {
+    const params = {
+      app_id: process.env.ADZUNA_APP_ID,
+      app_key: process.env.ADZUNA_APP_KEY,
+      what: "React Developer",
+      results_per_page: 5,
+    };
+
+    console.log("Request Params:", params);
+
+    const response = await axios.get(
+      "https://api.adzuna.com/v1/api/jobs/in/search/1",
+      { params }
+    );
+    const jobs = response.data.results.map((job) => ({
+  title: job.title,
+  company: job.company?.display_name || "Unknown Company",
+  location: job.location?.display_name || "Not Specified",
+  salary:
+    job.salary_min && job.salary_max
+      ? `₹${job.salary_min.toLocaleString()} - ₹${job.salary_max.toLocaleString()}`
+      : "Not Disclosed",
+  applyLink: job.redirect_url,
+}));
+
+res.json(jobs);
+
+
+  }catch (error) {
+  console.log("========== ADZUNA ERROR ==========");
+  console.log("Status:", error.response?.status);
+  console.log("Headers:", error.response?.headers);
+  console.log("Data:", error.response?.data);
+  console.log("==================================");
+
+  res.status(500).json({
+    status: error.response?.status,
+    error: error.response?.data || error.message,
+  });
+}
+});
+console.log("APP_ID:", process.env.ADZUNA_APP_ID);
+console.log("APP_KEY:", process.env.ADZUNA_APP_KEY ? "Loaded" : "Not Loaded");
 
 app.listen(5000, () => {
-  console.log("🚀 Server running on port 5000");
+  console.log("Server running on port 5000");
 });

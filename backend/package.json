@@ -10,6 +10,8 @@
   "license": "ISC",
   "dependencies": {
     "@google/genai": "^2.8.0",
+    "axiom": "^0.52.2",
+    "axios": "^1.18.1",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
