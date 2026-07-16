@@ -1,33 +1,58 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import "./Pages.css";
 import Navbar from "../components/Navbar";
 import Sidebar from "../components/Sidebar";
-import "./Pages.css";
 
 export default function Jobs() {
+  const [role, setRole] = useState("");
+  const [location, setLocation] = useState("India");
+  const [jobType, setJobType] = useState("Internship");
+  const [workMode, setWorkMode] = useState("Remote");
+
   const [jobs, setJobs] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    fetchJobs();
-  }, []);
+  const searchJobs = async () => {
+    if (!role) {
+      alert("Please enter a job role.");
+      return;
+    }
 
-  async function fetchJobs() {
     try {
-      const response = await fetch("http://localhost:5000/test-jobs");
+      setLoading(true);
 
-      if (!response.ok) {
-        throw new Error("Failed to fetch jobs");
-      }
-
+      const response = await fetch(
+        "https://resume-analyzer-w806.onrender.com/jobs",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            role,
+            location,
+            jobType,
+            workMode,
+          }),
+        }
+      );
+      console.log("Status:", response.status);
       const data = await response.json();
 
-      setJobs(data);
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setLoading(false);
-    }
+      console.log(data);
+
+    } catch (err) {
+  console.error("Job Fetch Error:", err);
+
+  if (err instanceof Error) {
+    alert(err.message);
+  } else {
+    alert("Unable to fetch jobs");
   }
+}
+
+    setLoading(false);
+  };
 
   return (
     <>
@@ -37,43 +62,101 @@ export default function Jobs() {
         <Sidebar />
 
         <div className="page-content">
-          <h1>💼 Live Jobs & Internships</h1>
 
-          <p>
-            Discover jobs and internships recommended for your profile.
-          </p>
+          <h1>💼 Job Finder</h1>
 
-          {loading ? (
-            <h2>Loading jobs...</h2>
-          ) : jobs.length === 0 ? (
-            <h2>No Jobs Found</h2>
-          ) : (
-            <div className="jobs-grid">
-              {jobs.map((job, index) => (
-                <div className="job-card" key={index}>
-                  <h2>{job.title}</h2>
+          <div className="glass-card">
 
-                  <h3>{job.company}</h3>
+            <label>Job Role</label>
 
-                  <p>📍 {job.location}</p>
+            <input
+              type="text"
+              placeholder="Full Stack Developer"
+              value={role}
+              onChange={(e) => setRole(e.target.value)}
+            />
 
-                  <p>💰 {job.salary}</p>
+            <label>Location</label>
 
-                  <a
-                    href={job.applyLink}
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    <button className="primary-btn">
-                      Apply Now
-                    </button>
-                  </a>
-                </div>
-              ))}
+            <select
+              value={location}
+              onChange={(e) => setLocation(e.target.value)}
+            >
+              <option>India</option>
+              <option>Bangalore</option>
+              <option>Delhi</option>
+              <option>Mumbai</option>
+              <option>Hyderabad</option>
+              <option>Pune</option>
+            </select>
+
+            <label>Job Type</label>
+
+            <select
+              value={jobType}
+              onChange={(e) => setJobType(e.target.value)}
+            >
+              <option>Internship</option>
+              <option>Full-Time</option>
+              <option>Part-Time</option>
+            </select>
+
+            <label>Work Mode</label>
+
+            <select
+              value={workMode}
+              onChange={(e) => setWorkMode(e.target.value)}
+            >
+              <option>Remote</option>
+              <option>Hybrid</option>
+              <option>On-site</option>
+            </select>
+
+            <button
+              className="primary-btn"
+              onClick={searchJobs}
+            >
+              {loading ? "Searching..." : "Search Jobs"}
+            </button>
+
+          </div>
+
+          <br />
+
+          {jobs.map((job, index) => (
+
+            <div
+              key={index}
+              className="glass-card"
+              style={{ marginBottom: "20px" }}
+            >
+
+              <h2>{job.title}</h2>
+
+              <h3>{job.company}</h3>
+
+              <p>📍 {job.location}</p>
+
+              <p>💰 {job.salary}</p>
+
+              <a
+                href={job.applyLink}
+                target="_blank"
+                rel="noreferrer"
+              >
+                <button className="primary-btn">
+                  Apply Now
+                </button>
+              </a>
+
             </div>
-          )}
+
+          ))}
+
         </div>
+
       </div>
+
     </>
   );
 }
