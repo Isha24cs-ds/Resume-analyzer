@@ -184,47 +184,35 @@ ${message}
     });
   }
 });
-  app.get("/test-jobs", async (req, res) => {
+app.post("/jobs", async (req, res) => {
   try {
-    const params = {
-      app_id: process.env.ADZUNA_APP_ID,
-      app_key: process.env.ADZUNA_APP_KEY,
-      what: "React Developer",
-      results_per_page: 5,
-    };
+    const { role, location } = req.body;
 
-    console.log("Request Params:", params);
-
-    const response = await axios.get(
-      "https://api.adzuna.com/v1/api/jobs/in/search/1",
-      { params }
+    const response = await axios.post(
+      `https://jooble.org/api/${process.env.JOOBLE_API_KEY}`,
+      {
+        keywords: role,
+        location: location,
+      }
     );
-    const jobs = response.data.results.map((job) => ({
-  title: job.title,
-  company: job.company?.display_name || "Unknown Company",
-  location: job.location?.display_name || "Not Specified",
-  salary:
-    job.salary_min && job.salary_max
-      ? `₹${job.salary_min.toLocaleString()} - ₹${job.salary_max.toLocaleString()}`
-      : "Not Disclosed",
-  applyLink: job.redirect_url,
-}));
 
-res.json(jobs);
+    const jobs = response.data.jobs.map((job) => ({
+      title: job.title,
+      company: job.company,
+      location: job.location,
+      salary: job.salary || "Not specified",
+      type: job.type || "N/A",
+      applyLink: job.link,
+    }));
 
+    res.json(jobs);
+  } catch (err) {
+    console.error(err.response?.data || err.message);
 
-  }catch (error) {
-  console.log("========== ADZUNA ERROR ==========");
-  console.log("Status:", error.response?.status);
-  console.log("Headers:", error.response?.headers);
-  console.log("Data:", error.response?.data);
-  console.log("==================================");
-
-  res.status(500).json({
-    status: error.response?.status,
-    error: error.response?.data || error.message,
-  });
-}
+    res.status(500).json({
+      message: "Unable to fetch jobs",
+    });
+  }
 });
 console.log("APP_ID:", process.env.ADZUNA_APP_ID);
 console.log("APP_KEY:", process.env.ADZUNA_APP_KEY ? "Loaded" : "Not Loaded");

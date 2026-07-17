@@ -226,3 +226,39 @@
     }
 
 }
+.page-container {
+  display: flex;
+  justify-content: center;
+  padding: 40px;
+}
+
+.glass-card {
+  width: 700px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 20px;
+  padding: 30px;
+  backdrop-filter: blur(12px);
+}
+
+input {
+  width: 100%;
+  padding: 12px;
+  margin-top: 15px;
+  border-radius: 10px;
+  border: none;
+  outline: none;
+}
+
+button {
+  margin-top: 20px;
+  padding: 12px 24px;
+  cursor: pointer;
+  border-radius: 10px;
+}
+
+a {
+  text-decoration: none;
+}
+
+
+

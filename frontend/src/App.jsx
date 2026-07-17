@@ -28,7 +28,7 @@ function App() {
 
         <Route path="/resume" element={<ResumeAnalyzer />} />
 
-        <Route path="/jobs" element={<Jobs />} />
+  
 
         <Route
           path="/mock-interview"
