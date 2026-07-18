@@ -188,25 +188,40 @@ app.post("/jobs", async (req, res) => {
   try {
     const { role, location } = req.body;
 
+    console.log("===== JOB SEARCH =====");
+    console.log("Role:", role);
+    console.log("Location:", location);
+
     const response = await axios.post(
       `https://jooble.org/api/${process.env.JOOBLE_API_KEY}`,
       {
         keywords: role,
         location: location,
+      },
+      {
+        headers: {
+          "Content-Type": "application/json",
+        },
       }
     );
 
-    const jobs = response.data.jobs.map((job) => ({
-      title: job.title,
-      company: job.company,
-      location: job.location,
-      salary: job.salary || "Not specified",
-      type: job.type || "N/A",
+    console.log("Jooble Response Received");
+
+    const jobs = (response.data.jobs || []).map((job) => ({
+      title: job.title || "N/A",
+      company: job.company || "Unknown Company",
+      location: job.location || "Not Specified",
+      salary: job.salary || "Not Specified",
+      type: job.type || "Not Specified",
       applyLink: job.link,
     }));
+    console.log("Full Jooble Response:");
+console.log(JSON.stringify(response.data, null, 2));
 
     res.json(jobs);
+
   } catch (err) {
+    console.error("===== JOOBLE ERROR =====");
     console.error(err.response?.data || err.message);
 
     res.status(500).json({
@@ -214,8 +229,67 @@ app.post("/jobs", async (req, res) => {
     });
   }
 });
-console.log("APP_ID:", process.env.ADZUNA_APP_ID);
-console.log("APP_KEY:", process.env.ADZUNA_APP_KEY ? "Loaded" : "Not Loaded");
+// =======================
+// START MOCK INTERVIEW
+// =======================
+
+app.post("/interview/start", async (req, res) => {
+  try {
+
+    const { role, difficulty } = req.body;
+
+    const prompt = `
+You are a professional technical interviewer.
+
+Generate exactly 10 interview questions.
+
+Role:
+${role}
+
+Difficulty:
+${difficulty}
+
+Rules:
+- Return ONLY JSON.
+- Do not return markdown.
+- Do not explain anything.
+
+Format:
+
+[
+  {
+    "id":1,
+    "question":"Tell me about yourself."
+  }
+]
+`;
+
+    const response = await ai.models.generateContent({
+      model: "gemini-2.5-flash",
+      contents: prompt,
+    });
+
+    const text = response.text;
+
+    const cleaned = text
+      .replace(/```json/g, "")
+      .replace(/```/g, "")
+      .trim();
+
+    const questions = JSON.parse(cleaned);
+
+    res.json(questions);
+
+  } catch (error) {
+
+    console.error(error);
+
+    res.status(500).json({
+      message: "Unable to generate interview",
+    });
+
+  }
+});
 
 app.listen(5000, () => {
   console.log("Server running on port 5000");

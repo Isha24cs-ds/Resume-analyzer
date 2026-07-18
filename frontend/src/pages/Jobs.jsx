@@ -19,7 +19,7 @@ function Jobs() {
       setError("");
       setJobs([]);
 
-      const response = await fetch("https://resume-analyzer-w806.onrender.com/jobs", {
+     const response = await fetch("http://localhost:5000/jobs", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
