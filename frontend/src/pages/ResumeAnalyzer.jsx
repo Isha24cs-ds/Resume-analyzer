@@ -26,7 +26,7 @@ export default function ResumeAnalyzer() {
       formData.append("jobDescription", jobDescription);
 
       const response = await fetch(
-  "http://localhost:5000/analyze",
+  "https://resume-analyzer-w806.onrender.com/analyze",
   {
     method: "POST",
     body: formData,
