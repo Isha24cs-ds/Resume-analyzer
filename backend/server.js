@@ -48,52 +48,116 @@ app.post("/analyze", upload.single("resume"), async (req, res) => {
     console.log("PDF parsed successfully");
 
     const prompt = `
-You are an expert ATS Resume Reviewer, Career Coach and Interview Mentor.
+You are an expert ATS Resume Reviewer, Career Coach, and Technical Interview Mentor.
 
-Analyze the resume against the job description.
+Analyze the resume against the provided job description.
 
 Return ONLY valid JSON.
 
 {
-  {
-  "atsScore": 0,
-  "jobMatchScore": 0,
-  "skills": [],
-  "missingSkills": [],
-  "strengths": [],
-  "weaknesses": [],
-  "suggestions": [],
+  "resumeAnalysis": {
+    "atsScore": 0,
+    "jobMatchScore": 0,
+    "recommendedRole": "",
+    "summary": "",
+    "suggestions": []
+  },
+
+  "skillGap": {
+    "overallMatch": 0,
+
+    "matchedSkills": [],
+
+    "missingSkills": [],
+
+    "strengths": [],
+
+    "weaknesses": [],
+
+    "highPrioritySkills": [],
+
+    "recommendation": ""
+  },
+
+  "careerRoadmap": {
+    "duration": "30 Days",
+
+    "weeks": [
+      {
+        "week": "Week 1",
+        "title": "",
+        "topics": []
+      },
+      {
+        "week": "Week 2",
+        "title": "",
+        "topics": []
+      },
+      {
+        "week": "Week 3",
+        "title": "",
+        "topics": []
+      },
+      {
+        "week": "Week 4",
+        "title": "",
+        "topics": []
+      }
+    ],
+
+    "expectedATS": 0,
+
+    "summary": ""
+  },
+
   "interviewQuestions": []
-}
 }
 
 Rules:
-...
-- ATS Score between 0 and 100
-- Job Match Score between 0 and 100
-- Extract all important technical skills from the resume.
-- Return them in the "skills" array.
-- Give 3-5 strengths
-- Give 3-5 weaknesses
-- Give 3-5 suggestions
-- List important missing skills
-- Generate 10 interview questions
-- Questions should be based on:
-  1. Resume skills
-  2. Resume projects
-  3. Job description
-  4. Experience level
+
+1. ATS Score must be between 0-100.
+
+2. Job Match Score must be between 0-100.
+
+3. Recommend the best suited software role.
+
+4. Write a professional resume summary.
+
+5. Give exactly 5 resume improvement suggestions.
+
+6. Extract all skills from the resume.
+
+7. Separate them into:
+
+- matchedSkills
+- missingSkills
+
+8. Give exactly 5 strengths.
+
+9. Give exactly 5 weaknesses.
+
+10. Select the most important missing skills as highPrioritySkills.
+
+11. Create a personalized 30-day learning roadmap.
+
+Week 1 should start with beginner topics.
+
+Week 4 should finish with deployment/interview preparation.
+
+12. Estimate ATS score after completing the roadmap.
+
+13. Generate exactly 10 interview questions.
 
 Return ONLY JSON.
-Do NOT return markdown.
 
 Resume:
+
 ${resumeText}
 
 Job Description:
+
 ${jobDescription}
 `;
-
     const response = await ai.models.generateContent({
       model: "gemini-2.5-flash",
       contents: prompt,
@@ -109,33 +173,46 @@ ${jobDescription}
       .replace(/```/g, "")
       .trim();
 
-    const aiResult = JSON.parse(cleaned);
+    let aiResult;
 
-    // Optional fallback defaults
-    aiResult.atsScore =
-      aiResult.atsScore || 0;
+try {
+  aiResult = JSON.parse(cleaned);
+} catch (err) {
+  console.error("Invalid JSON from Gemini:");
+  console.log(cleaned);
 
-    aiResult.jobMatchScore =
-      aiResult.jobMatchScore || 0;
-      
-    aiResult.skills =
-      aiResult.skills || [];  
+  return res.status(500).json({
+    message: "Gemini returned invalid JSON.",
+  });
+}
 
-    aiResult.missingSkills =
-      aiResult.missingSkills || [];
+   aiResult.resumeAnalysis = aiResult.resumeAnalysis || {
+  atsScore: 0,
+  jobMatchScore: 0,
+  recommendedRole: "",
+  summary: "",
+  suggestions: [],
+};
 
-    aiResult.strengths =
-      aiResult.strengths || [];
+aiResult.skillGap = aiResult.skillGap || {
+  overallMatch: 0,
+  matchedSkills: [],
+  missingSkills: [],
+  strengths: [],
+  weaknesses: [],
+  highPrioritySkills: [],
+  recommendation: "",
+};
 
-    aiResult.weaknesses =
-      aiResult.weaknesses || [];
+aiResult.careerRoadmap = aiResult.careerRoadmap || {
+  duration: "30 Days",
+  weeks: [],
+  expectedATS: 0,
+  summary: "",
+};
 
-    aiResult.suggestions =
-      aiResult.suggestions || [];
-
-    aiResult.interviewQuestions =
-      aiResult.interviewQuestions || [];
-
+aiResult.interviewQuestions =
+  aiResult.interviewQuestions || [];
     res.json(aiResult);
 
   } catch (error) {

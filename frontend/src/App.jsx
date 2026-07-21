@@ -22,8 +22,8 @@ function App() {
       <Routes>
         <Route path="/jobs" element={<Jobs />} />
         <Route path="/" element={<Landing />} />
-
-    
+<Route path="/skill-gap" element={<SkillGap />}/>
+    <Route path="/career-roadmap" element={<CareerRoadmap />}/>
         <Route path="/dashboard" element={<Dashboard />} />
 
         <Route path="/resume" element={<ResumeAnalyzer />} />

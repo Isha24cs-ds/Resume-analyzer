@@ -1,62 +1,56 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import "./Pages.css";
 import Navbar from "../components/Navbar";
 import Sidebar from "../components/Sidebar";
 
 export default function ResumeAnalyzer() {
+  const navigate = useNavigate();
+
   const [resume, setResume] = useState(null);
   const [jobDescription, setJobDescription] = useState("");
   const [loading, setLoading] = useState(false);
-const [result, setResult] = useState(null);
-const [strengths, setStrengths] = useState([]);
-const [weaknesses, setWeaknesses] = useState([]);
-const [suggestions, setSuggestions] = useState([]);
-const [missingSkills, setMissingSkills] = useState([]);
-const [jobMatchScore, setJobMatchScore] = useState(null);
-const handleAnalyze = async () => {
+  const [result, setResult] = useState(null);
 
-  if (!resume) {
-    alert("Please upload a resume.");
-    return;
+  const handleAnalyze = async () => {
+    if (!resume) {
+      alert("Please upload a resume.");
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      const formData = new FormData();
+      formData.append("resume", resume);
+      formData.append("jobDescription", jobDescription);
+
+      const response = await fetch(
+  "http://localhost:5000/analyze",
+  {
+    method: "POST",
+    body: formData,
   }
-
-  try {
-    setLoading(true);
-
-    const formData = new FormData();
-
-    formData.append("resume", resume);
-    formData.append("jobDescription", jobDescription);
-
-    const response = await fetch(
-      "https://resume-analyzer-w806.onrender.com/analyze",
-      {
-        method: "POST",
-        body: formData,
+);
+      if (!response.ok) {
+        throw new Error("Failed to analyze resume.");
       }
-    );
-    console.log("Status:", response.status);
 
-const data = await response.json();
+      const data = await response.json();
+      console.log(JSON.stringify(data, null, 2));
+console.log("Skill Gap:", data.skillGap);
 
-    console.log(data);
+      console.log("Analysis Result:", data);
 
-   setResult(data);
+      setResult(data);
+    } catch (err) {
+      console.error(err);
+      alert("Analysis failed.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
-setJobMatchScore(data.jobMatchScore);
-setStrengths(data.strengths || []);
-setWeaknesses(data.weaknesses || []);
-setSuggestions(data.suggestions || []);
-setMissingSkills(data.missingSkills || []);
-
-
-  } catch (err) {
-    console.error(err);
-    alert("Analysis failed.");
-  }
-
-  setLoading(false);
-};
   return (
     <>
       <Navbar />
@@ -65,7 +59,6 @@ setMissingSkills(data.missingSkills || []);
         <Sidebar />
 
         <div className="page-content">
-
           <h1>📄 AI Resume Analyzer</h1>
 
           <p>
@@ -73,7 +66,6 @@ setMissingSkills(data.missingSkills || []);
           </p>
 
           <div className="glass-card">
-
             <label>Upload Resume (PDF)</label>
 
             <input
@@ -92,65 +84,69 @@ setMissingSkills(data.missingSkills || []);
             />
 
             <button
-  className="primary-btn"
-  onClick={handleAnalyze}
->
-  {loading ? "Analyzing..." : "Analyze Resume"}
-</button>
-{result && (
-  <>
-    <div className="glass-card" style={{ marginTop: "20px" }}>
-      <h2>📊 Analysis Result</h2>
-
-      <h3>🎯 ATS Score: {result.atsScore}</h3>
-
-      <h3>💼 Job Match: {jobMatchScore}%</h3>
-    </div>
-
-    <div className="glass-card" style={{ marginTop: "20px" }}>
-      <h2>💪 Strengths</h2>
-
-      <ul>
-        {strengths.map((item, index) => (
-          <li key={index}>✅ {item}</li>
-        ))}
-      </ul>
-    </div>
-
-    <div className="glass-card" style={{ marginTop: "20px" }}>
-      <h2>⚠️ Weaknesses</h2>
-
-      <ul>
-        {weaknesses.map((item, index) => (
-          <li key={index}>❌ {item}</li>
-        ))}
-      </ul>
-    </div>
-
-    <div className="glass-card" style={{ marginTop: "20px" }}>
-      <h2>🚀 Missing Skills</h2>
-
-      <ul>
-        {missingSkills.map((item, index) => (
-          <li key={index}>📌 {item}</li>
-        ))}
-      </ul>
-    </div>
-
-    <div className="glass-card" style={{ marginTop: "20px" }}>
-      <h2>💡 Suggestions</h2>
-
-      <ul>
-        {suggestions.map((item, index) => (
-          <li key={index}>👉 {item}</li>
-        ))}
-      </ul>
-    </div>
-  </>
-)}
-
+              className="primary-btn"
+              onClick={handleAnalyze}
+              disabled={loading}
+            >
+              {loading ? "Analyzing..." : "Analyze Resume"}
+            </button>
           </div>
 
+          {result && (
+            <div className="glass-card" style={{ marginTop: "25px" }}>
+              <h2>📊 Resume Analysis Report</h2>
+
+              <hr />
+
+              <h3>
+                🎯 ATS Score:{" "}
+                {result.resumeAnalysis?.atsScore ?? 0}
+                %
+              </h3>
+
+              <h3>
+                💼 Job Match Score:{" "}
+                {result.resumeAnalysis?.jobMatchScore ?? 0}
+                %
+              </h3>
+
+              <h3>👨‍💻 Recommended Role</h3>
+
+              <p>
+                {result.resumeAnalysis?.recommendedRole ||
+                  "Not Available"}
+              </p>
+
+              <h3>📝 AI Resume Summary</h3>
+
+              <p>
+                {result.resumeAnalysis?.summary ||
+                  "No summary available."}
+              </p>
+
+              <h3>💡 Resume Improvement Suggestions</h3>
+
+              <ul>
+                {(result.resumeAnalysis?.suggestions || []).map(
+                  (item, index) => (
+                    <li key={index}>✅ {item}</li>
+                  )
+                )}
+              </ul>
+
+              <button
+                className="primary-btn"
+                style={{ marginTop: "20px" }}
+                onClick={() =>
+                  navigate("/skill-gap", {
+                    state: result,
+                  })
+                }
+              >
+                View Skill Gap Analysis →
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </>
